@@ -1,6 +1,4 @@
-import dash
-from dash import dcc, html
-from dash.dependencies import Input, Output
+import streamlit as st
 import plotly.express as px
 import pandas as pd
 
@@ -19,46 +17,25 @@ orientation_map = {
 }
 df['Cardinal_Orientation'] = df['Orientation'].map(orientation_map)
 
-# Initialize the Dash app
-app = dash.Dash(__name__)
+# Streamlit app layout
+st.title("Building Energy Efficiency Dashboard")
 
-# Define the layout of the app
-app.layout = html.Div([
-    html.H1("Building Energy Efficiency Dashboard"),
-
-    # Dropdown to select feature
-    dcc.Dropdown(
-        id='feature-dropdown',
-        options=[
-            {'label': 'Relative Compactness', 'value': 'Relative_Compactness'},
-            {'label': 'Surface Area', 'value': 'Surface_Area'},
-            {'label': 'Glazing Area', 'value': 'Glazing_Area'},
-            {'label': 'Overall Height', 'value': 'Overall_Height'}
-        ],
-        value='Relative_Compactness'
-    ),
-
-    # Graph for total load vs selected feature
-    dcc.Graph(id='total-load-graph'),
-
-    # Correlation heatmap
-    dcc.Graph(id='correlation-heatmap', figure=px.imshow(df[['Relative_Compactness', 'Surface_Area', 'Glazing_Area', 'Overall_Height', 'Total_Load']].corr(), 
-                                                         title="Correlation Matrix of Energy Efficiency Factors",
-                                                         color_continuous_scale='aggrnyl',
-                                                         zmin=-1, zmax=1))
-])
-
-# Define the callback to update the graph
-@app.callback(
-    Output('total-load-graph', 'figure'),
-    [Input('feature-dropdown', 'value')]
+# Dropdown to select feature
+feature = st.selectbox(
+    'Select Feature',
+    ['Relative_Compactness', 'Surface_Area', 'Glazing_Area', 'Overall_Height']
 )
-def update_graph(selected_feature):
-    fig = px.scatter(df, x=selected_feature, y='Total_Load', color='Cardinal_Orientation',
-                     title=f'Total Load vs {selected_feature} with Orientation',
-                     labels={selected_feature: selected_feature, 'Total_Load': 'Total Load'})
-    return fig
 
-# Run the app
-if __name__ == '__main__':
-    app.run_server(debug=True)
+# Plot for total load vs selected feature
+fig = px.scatter(df, x=feature, y='Total_Load', color='Cardinal_Orientation',
+                 title=f'Total Load vs {feature} with Orientation',
+                 labels={feature: feature, 'Total_Load': 'Total Load'})
+st.plotly_chart(fig)
+
+# Correlation heatmap
+corr_matrix = df[['Relrative_Compactness', 'Surface_Area', 'Glazing_Area', 'Overall_Height', 'Total_Load']].corr()
+heatmap_fig = px.imshow(corr_matrix, 
+                        title="Correlation Matrix of Energy Efficiency Factors",
+                        color_continuous_scale='aggrnyl',
+                        zmin=-1, zmax=1)
+st.plotly_chart(heatmap_fig)
